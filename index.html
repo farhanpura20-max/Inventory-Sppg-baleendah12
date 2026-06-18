@@ -1,0 +1,263 @@
+<!doctype html>
+<html lang="id">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Inventory SPPG Baleendah 12</title>
+  <link rel="stylesheet" href="assets/style.css">
+</head>
+<body>
+  <div class="app-shell">
+    <aside class="sidebar">
+      <div class="brand-block">
+        <img src="assets/logo-bgn.png" alt="Logo Badan Gizi Nasional" class="brand-logo">
+        <div>
+          <h1>Inventory</h1>
+          <p>SPPG Baleendah 12</p>
+        </div>
+      </div>
+      <div class="role-box">
+        <span class="role-title">Administrator Page</span>
+        <span class="role-subtitle">Pengelolaan bahan dapur</span>
+      </div>
+      <nav class="menu" aria-label="Navigasi utama">
+        <button class="menu-item active" data-page="dashboard">Dashboard</button>
+        <button class="menu-item" data-page="barang">Tambah Barang</button>
+        <button class="menu-item" data-page="pembelian">Pembelian Bahan</button>
+        <button class="menu-item" data-page="pemakaian">Pemakaian Bahan</button>
+        <button class="menu-item" data-page="opname">Stok Opname</button>
+        <button class="menu-item" data-page="laporan">Laporan Cetak</button>
+      </nav>
+      <div class="sidebar-footer">
+        <button class="ghost-btn" id="resetDemoBtn" type="button">Reset Data Demo</button>
+      </div>
+    </aside>
+
+    <main class="main-content">
+      <header class="topbar">
+        <div>
+          <p class="eyebrow">Sistem Persediaan Bahan</p>
+          <h2 id="pageTitle">Dashboard</h2>
+        </div>
+        <div class="topbar-actions">
+          <span id="todayLabel"></span>
+          <button class="danger-btn" type="button" id="logoutBtn">Logout</button>
+        </div>
+      </header>
+
+      <section class="page active" id="page-dashboard">
+        <div class="cards-grid">
+          <article class="metric-card red">
+            <span class="metric-label">Total Barang</span>
+            <strong id="dashTotalItems">0</strong>
+            <small>Master bahan aktif</small>
+          </article>
+          <article class="metric-card blue">
+            <span class="metric-label">Total Stok</span>
+            <strong id="dashTotalStock">0</strong>
+            <small>Akumulasi seluruh satuan</small>
+          </article>
+          <article class="metric-card green">
+            <span class="metric-label">Nilai Stok</span>
+            <strong id="dashStockValue">Rp0</strong>
+            <small>Berdasarkan harga pembelian</small>
+          </article>
+          <article class="metric-card orange">
+            <span class="metric-label">Exp ≤ 7 Hari</span>
+            <strong id="dashNearExp">0</strong>
+            <small>Batch perlu diprioritaskan</small>
+          </article>
+        </div>
+
+        <div class="dashboard-grid">
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Ringkasan Stok Bahan</h3>
+              <span class="muted">Stok berjalan per bahan</span>
+            </div>
+            <div class="chart-wrap"><canvas id="stockChart" width="680" height="280"></canvas></div>
+          </section>
+          <section class="panel">
+            <div class="panel-head">
+              <h3>Peringatan Expired</h3>
+              <span class="muted">Urut tanggal kedaluwarsa</span>
+            </div>
+            <div class="table-wrap small-table">
+              <table>
+                <thead><tr><th>Bahan</th><th>Sisa</th><th>Exp</th><th>Status</th></tr></thead>
+                <tbody id="dashExpTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head">
+            <h3>Stok Rendah</h3>
+            <span class="muted">Bahan di bawah batas minimum</span>
+          </div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Nama Bahan</th><th>Kategori</th><th>Stok</th><th>Minimum</th><th>Status</th></tr></thead>
+              <tbody id="lowStockTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-barang">
+        <div class="split-grid">
+          <section class="panel">
+            <div class="panel-head"><h3>Tambah Barang/Bahan</h3><span class="muted">Master data bahan</span></div>
+            <form id="itemForm" class="form-grid">
+              <label>Nama bahan<input type="text" id="itemName" required placeholder="Contoh: Beras premium"></label>
+              <label>Kategori<input type="text" id="itemCategory" required placeholder="Contoh: Karbohidrat"></label>
+              <label>Satuan<select id="itemUnit" required><option value="kg">kg</option><option value="gram">gram</option><option value="liter">liter</option><option value="ml">ml</option><option value="pcs">pcs</option><option value="ikat">ikat</option><option value="pack">pack</option></select></label>
+              <label>Stok minimum<input type="number" id="itemMinStock" required min="0" step="0.01" placeholder="0"></label>
+              <button class="primary-btn" type="submit">Simpan Barang</button>
+            </form>
+          </section>
+          <section class="panel note-panel">
+            <h3>Catatan Penggunaan</h3>
+            <p>Barang yang ditambahkan akan muncul pada transaksi pembelian, pemakaian, stok opname, dan laporan. Setiap pembelian membentuk batch stok berdasarkan tanggal kedaluwarsa.</p>
+            <p>Sistem mengurangi stok dengan metode FEFO, yaitu bahan dengan tanggal expired paling dekat dipakai lebih dahulu.</p>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Daftar Barang</h3><input type="search" id="itemSearch" placeholder="Cari barang..."></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>ID</th><th>Nama</th><th>Kategori</th><th>Satuan</th><th>Stok Minimum</th><th>Stok Saat Ini</th><th>Aksi</th></tr></thead>
+              <tbody id="itemsTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-pembelian">
+        <section class="panel">
+          <div class="panel-head"><h3>Pembelian Bahan</h3><span class="muted">Input harga dan expired bahan</span></div>
+          <form id="purchaseForm" class="form-grid form-grid-wide">
+            <label>Tanggal beli<input type="date" id="purchaseDate" required></label>
+            <label>Nama bahan<select id="purchaseItem" required></select></label>
+            <label>Jumlah<input type="number" id="purchaseQty" required min="0.01" step="0.01"></label>
+            <label>Harga satuan<input type="number" id="purchasePrice" required min="0" step="1" placeholder="Contoh: 15000"></label>
+            <label>Tanggal expired<input type="date" id="purchaseExp" required></label>
+            <label>Supplier<input type="text" id="purchaseSupplier" placeholder="Opsional"></label>
+            <label class="full-span">Keterangan<input type="text" id="purchaseNote" placeholder="Nomor nota, sumber bahan, atau catatan lain"></label>
+            <button class="primary-btn" type="submit">Simpan Pembelian</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Riwayat Pembelian</h3><input type="search" id="purchaseSearch" placeholder="Cari pembelian..."></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tanggal</th><th>Bahan</th><th>Jumlah</th><th>Harga</th><th>Total</th><th>Exp</th><th>Supplier</th><th>Aksi</th></tr></thead>
+              <tbody id="purchasesTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-pemakaian">
+        <div class="split-grid">
+          <section class="panel">
+            <div class="panel-head"><h3>Pemakaian Bahan</h3><span class="muted">Stok keluar otomatis berdasarkan exp terdekat</span></div>
+            <form id="usageForm" class="form-grid">
+              <label>Tanggal pakai<input type="date" id="usageDate" required></label>
+              <label>Nama bahan<select id="usageItem" required></select></label>
+              <label>Jumlah dipakai<input type="number" id="usageQty" required min="0.01" step="0.01"></label>
+              <label>Keterangan<input type="text" id="usageNote" placeholder="Contoh: Menu makan siang"></label>
+              <button class="primary-btn" type="submit">Simpan Pemakaian</button>
+            </form>
+          </section>
+          <section class="panel">
+            <div class="panel-head"><h3>Batch Tersedia</h3><span class="muted">Berdasarkan pilihan bahan</span></div>
+            <div class="table-wrap small-table">
+              <table>
+                <thead><tr><th>Exp</th><th>Sisa</th><th>Harga</th><th>Status</th></tr></thead>
+                <tbody id="usageLotsTable"></tbody>
+              </table>
+            </div>
+          </section>
+        </div>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Riwayat Pemakaian</h3><input type="search" id="usageSearch" placeholder="Cari pemakaian..."></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tanggal</th><th>Bahan</th><th>Jumlah</th><th>Batch Exp yang Dipakai</th><th>Keterangan</th><th>Aksi</th></tr></thead>
+              <tbody id="usagesTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-opname">
+        <section class="panel">
+          <div class="panel-head"><h3>Stok Opname</h3><span class="muted">Penyesuaian stok fisik dan stok sistem</span></div>
+          <form id="opnameForm" class="form-grid form-grid-wide">
+            <label>Tanggal opname<input type="date" id="opnameDate" required></label>
+            <label>Nama bahan<select id="opnameItem" required></select></label>
+            <label>Stok sistem<input type="number" id="opnameSystem" readonly></label>
+            <label>Stok fisik<input type="number" id="opnameActual" required min="0" step="0.01"></label>
+            <label>Exp untuk selisih lebih<input type="date" id="opnameExp"></label>
+            <label class="full-span">Catatan<input type="text" id="opnameNote" placeholder="Contoh: Selisih karena koreksi penimbangan"></label>
+            <button class="primary-btn" type="submit">Simpan Opname</button>
+          </form>
+        </section>
+
+        <section class="panel">
+          <div class="panel-head"><h3>Riwayat Stok Opname</h3><input type="search" id="opnameSearch" placeholder="Cari opname..."></div>
+          <div class="table-wrap">
+            <table>
+              <thead><tr><th>Tanggal</th><th>Bahan</th><th>Stok Sistem</th><th>Stok Fisik</th><th>Selisih</th><th>Catatan</th><th>Aksi</th></tr></thead>
+              <tbody id="opnameTable"></tbody>
+            </table>
+          </div>
+        </section>
+      </section>
+
+      <section class="page" id="page-laporan">
+        <section class="panel no-print">
+          <div class="panel-head"><h3>Laporan</h3><span class="muted">Filter dan cetak laporan persediaan</span></div>
+          <div class="report-controls">
+            <label>Jenis laporan<select id="reportType"><option value="stock">Laporan Stok Saat Ini</option><option value="purchases">Laporan Pembelian</option><option value="usages">Laporan Pemakaian</option><option value="opname">Laporan Stok Opname</option><option value="expiry">Laporan Expired / Hampir Expired</option></select></label>
+            <label>Dari tanggal<input type="date" id="reportStart"></label>
+            <label>Sampai tanggal<input type="date" id="reportEnd"></label>
+            <button class="primary-btn" id="generateReportBtn" type="button">Tampilkan</button>
+            <button class="secondary-btn" id="printReportBtn" type="button">Cetak</button>
+            <button class="secondary-btn" id="exportCsvBtn" type="button">Export CSV</button>
+          </div>
+        </section>
+
+        <section class="panel print-area" id="reportArea">
+          <div class="report-header">
+            <img src="assets/logo-bgn.png" alt="Logo BGN">
+            <div>
+              <h3>SPPG BALEENDAH 12</h3>
+              <p>Inventory Bahan Dapur</p>
+              <p id="reportMeta">Laporan Stok Saat Ini</p>
+            </div>
+          </div>
+          <div class="table-wrap report-table-wrap">
+            <table id="reportTable"><thead></thead><tbody></tbody><tfoot></tfoot></table>
+          </div>
+          <div class="signature-grid">
+            <div><p>Mengetahui,</p><strong>Kepala SPPG</strong></div>
+            <div><p>Dibuat oleh,</p><strong>Admin Inventory</strong></div>
+          </div>
+        </section>
+      </section>
+    </main>
+  </div>
+
+  <div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+  <script src="assets/supabase-config.js"></script>
+  <script src="assets/app.js"></script>
+</body>
+</html>
